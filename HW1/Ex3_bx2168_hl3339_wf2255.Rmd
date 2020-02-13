@@ -1,0 +1,80 @@
+---
+title: "Stats GR5703 HW1 Ex3"
+author: "Hanjun Li (hl3339), Wen Fan (wf2255), Banruo Xie (bx2168)"
+date: "2/10/2020"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+---
+
+### Exercise 3
+
+#### Problem 1
+We know that for distribution that's symmertric about 0, and for which odd-order moment actually exists, the odd-order moments are equal to 0. In our case, since $R_1,...,R_n\sim N(\mu, \sigma^2)$, $R_1-\mu\sim N(0, \sigma^2)$, then: 
+\begin{align*}
+\gamma=E[R_1^3]&=E[(R_1-\mu+\mu)^3]\\
+&=E[(R_1-\mu)^3+3(R_1-\mu)^2\mu+3(R_1-\mu)\mu^2+\mu^3]\\
+&=E[3(R_1-\mu)^2\mu]+E[\mu^3] \mbox{ since the odd-order moments are 0, and }\mu \mbox{ is a constant}\\
+&=3\mu E[(R_1-\mu)^2]+\mu^3\\
+&=3\mu(var(R_1-\mu)+E[R_1-\mu]^2)+\mu^3\\
+&=3\mu\sigma^2+\mu^3
+\end{align*}
+
+#### Problem 2
+(a) Derive the bias of $\hat{\gamma}$  
+We have $\bar{R_i}=\frac{1}{n}\sum_{i=1}^n R_i\sim N(\mu, \frac{\sigma^2}{n})$ and $\bar{R_i}-\mu \sim N(0, \frac{\sigma^2}{n})$, then 
+
+\begin{align*}
+E[\hat{\gamma}]=E[\bar{R_i}^3]&=E[(\bar{R_i}-\mu+\mu)^3]\\
+&=E[(\bar{R_i}-\mu)^3+3(\bar{R_i}-\mu)^2\mu+3(\bar{R_i}-\mu)\mu^2+\mu^3]\\
+&=3\mu E[(\bar{R_i}-\mu)^2]+\mu^3\\
+&=3\mu(var(\bar{R_i}-\mu)+E[\bar{R_i}-\mu]^2)+\mu^3\\
+&=3\mu\frac{\sigma^2}{n}+\mu^3
+\end{align*}
+
+$bias(\hat{\gamma})=E[\hat\gamma]-\gamma=3\mu\frac{\sigma^2}{n}+\mu^3-(3\mu\sigma^2+\mu^3)=3\mu\frac{1-n}{n}\sigma^2$
+
+(b) Is $\hat{\gamma}$ consistent? Support your answer with a mathematical argument.  
+For an estimator to be consistent, we want to show it converges in probability to the true parameter as n goes to infinity. In our case, as n goest to infinity, $E[\hat\gamma]=3\mu\frac{\sigma^2}{n}+\mu^3\rightarrow\mu^3$, which does not equal $3\mu\sigma^2+\mu^3$, so $\hat{\gamma}$ is not consistent. Also, we have 
+
+\begin{align*}
+P(|\hat\theta-\theta|>\epsilon)&=P(|\bar{R_i}^3-(3\mu\sigma^2+\mu^3)|>\epsilon)\\
+&= 1-P(|\bar{R_i}^3-(3\mu\sigma^2+\mu^3)|\leq \epsilon) = 1-P(\bar{R_i}^3-(3\mu\sigma^2+\mu^3)\leq\epsilon)-(1-P(\bar{R_i}^3-(3\mu\sigma^2+\mu^3)\leq-\epsilon))\\
+&= P(\bar{R_i}^3\leq 3\mu\sigma^2+\mu^3+\epsilon)+P(\bar{R_i}^3\leq 3\mu\sigma^2+\mu^3-\epsilon)\\
+&= P(Z\leq \sqrt{n}\frac{(3\mu\sigma^2+\mu^3+\epsilon)^\frac{1}{3}-\mu}{\sigma})+P(Z\leq \sqrt{n}\frac{(3\mu\sigma^2+\mu^3-\epsilon)^\frac{1}{3}-\mu}{\sigma})\\
+&=\phi(\infty)+\phi(-\infty)\\
+&=1+0=1\neq 0 \text{ as n goes to infinity}
+\end{align*}
+
+Hence, $\hat{\gamma}$ is not consistent
+
+#### Problem 3
+We have $E[\hat\gamma]=3\mu\frac{\sigma^2}{n}+\mu^3$.To get an unbiased estimator of $\mu^3$ from $\hat\gamma=(\frac{1}{n}\sum_{i=1}^n R_i)^3$, we can simply substrat the bias term from $\hat\gamma=(\frac{1}{n}\sum_{i=1}^n R_i)^3$. Hence, we can choose $\hat\gamma - 3\mu\frac{\sigma^2}{n}$ to be the estimator. Since $3\mu\frac{\sigma^2}{n}$ is a constant, 
+$$E[\hat\gamma - 3\mu\frac{\sigma^2}{n}]=3\mu\frac{\sigma^2}{n}+\mu^3-3\mu\frac{\sigma^2}{n}=\mu^3$$
+
+#### Problem 4
+(a) Derive the bias of $\tilde\gamma$  
+
+\begin{align*}
+bias(\tilde\gamma)=E[\tilde\gamma]-\gamma &= E[\frac{1}{n}\sum_{i=1}^n R_i^3]-\gamma\\
+&= \frac{1}{n}\sum_{i=1}^n E[R_i^3]-\gamma\\
+&= \frac{1}{n} n  E[R_1^3]-\gamma\\
+&= \gamma -\gamma =0
+\end{align*}
+
+(b) Is $\tilde{\gamma}$ consistent? Support your answer with a mathematical argument.  
+
+By the law of large number, as n goes to infinity, $\tilde{\gamma}\overset{P}\rightarrow E[R_1^3]=\gamma$, so $\tilde{\gamma}$ is consistent.
+
+
+#### Problem 5
+From problem 4, we know that $U(X)=\tilde\gamma$ is an unbiased estimator. Also, we know that the minimal sufficient statistics for normal distributions are $T(R)=(\bar{R} =\frac{1}{n}\sum_{i=1}^n R_i, \bar{R}^2=\frac{1}{n}\sum_{i=1}^n R_i^2)$. Thereby, using Rao-Blackwell Theorem, 
+\begin{align*}
+\gamma_{MVUE}=E[U(R)|T(R)]&=E[\tilde\gamma|\bar{R}, \bar{R}^2]=E[\frac{1}{n}\sum_{i=1}^n R_i^3|\bar{R}, \bar{R}^2]\\
+&= E[\frac{1}{n}\sum_{i=1}^n (R_i-\bar{R}+\bar{R})^3|\bar{R}, \bar{R}^2]\\
+&= E[\frac{1}{n}\sum_{i=1}^n ((R_i-\bar{R})^3+3(R_i-\bar{R})^2\bar{R}+3(R_i-\bar{R})\bar{R}^2+\bar{R}^3)|\bar{R}, \bar{R}^2]\\
+&= E[\frac{1}{n}\sum_{i=1}^n (3(R_i-\bar{R})^2\bar{R}+\bar{R}^3)|\bar{R}, \bar{R}^2]\\
+&= E[\frac{1}{n}\sum_{i=1}^n (3R_i^2\bar{R}+3\bar{R}^3-6R_i\bar{R}^2+\bar{R}^3)|\bar{R}, \bar{R}^2]\\
+&= 3\bar{R}E[\frac{1}{n}\sum_{i=1}^n R_i^2]+4E[\bar{R}^3]-6\bar{R}^2E[\frac{1}{n}\sum_{i=1}^nR_i]\\
+&= 3\bar{R}\bar{R^2}-2\bar{R}^3
+\end{align*}

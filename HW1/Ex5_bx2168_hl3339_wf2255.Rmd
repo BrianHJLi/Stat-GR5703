@@ -1,0 +1,108 @@
+---
+title: "Stats GR5703 HW1 Ex5"
+author: "Hanjun Li (hl3339), Wen Fan (wf2255), Banruo Xie (bx2168)"
+date: "2/11/2020"
+output: pdf_document
+header-includes:
+  - \usepackage{amsmath}
+---
+
+### Exercise 5
+
+#### Problem 1
+This paper aims to figure out if techno-scientific inventions are inevitable. The author presents several findings by different scientists and researchers, and in order to testify those statements, the author fitted the collected data using a Poisson model. In conclusion, the occurrence of independent discoveries and inventions cannot be taken as evidence for the inevitability of techno-scientific advances, and it might highly depend on luck. It seems reasonable to me to choose Poisson as the model to carry out this experiment as Poisson distribution is good at modelling the probability of rare events happening, where techno-scientific inventions are relatively rare events.
+
+#### Problem 2
+In this case, $k=0$ means the no-findings and $k=1$ means singleton; however, we notice that data for no-findings and singletons (disguised multiples) are actually very minimal, so ignoring cases for $k=0$ or $k=1$ in the truncated model seems acceptable.
+
+#### Problem 3
+Suppose we have $X\sim Poi(\lambda)$, then we know that 
+
+\begin{align*}
+E[X]=\lambda &= \sum_{k=0}^\infty k\frac{\lambda^ke^{-\lambda}}{k!}\\
+&= 0+\lambda e^{-\lambda} +\sum_{k=2}^\infty k\frac{\lambda^ke^{-\lambda}}{k!}\\
+\implies \sum_{k=2}^\infty k\frac{\lambda^ke^{-\lambda}}{k!} &= \lambda - \lambda e^{-\lambda}\\
+\end{align*}
+
+Now we have $Y\sim \text{Truncated Poi}(\lambda)$, then 
+\begin{align*}
+E[Y] &= \sum_{k=2}^\infty k\frac{\lambda^ke^{-\lambda}}{k!}\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}\\
+&= \frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}\sum_{k=2}^\infty k\frac{\lambda^ke^{-\lambda}}{k!}\\
+&= \frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}(\lambda - \lambda e^{-\lambda})\\
+\end{align*}
+
+and we know that $E[X^2]=var(X)+E[X]^2=\lambda+\lambda^2$, then 
+\begin{align*}
+var[Y] &= E[Y^2]-E[Y]^2\\
+&= \sum_{k=2}^\infty k^2\frac{\lambda^ke^{-\lambda}}{k!}\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}-(\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}(\lambda - \lambda e^{-\lambda}))^2\\
+&= \frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}\sum_{k=2}^\infty k^2\frac{\lambda^ke^{-\lambda}}{k!} - (\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}(\lambda - \lambda e^{-\lambda}))^2\\
+&= \frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}(\lambda + \lambda^2- \lambda e^{-\lambda})-(\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}(\lambda - \lambda e^{-\lambda}))^2\\
+\end{align*}
+
+Denote $U=\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}}$
+
+\begin{align*}
+var[Y] &= E[Y^2]-E[Y]^2\\
+&= U(\lambda + \lambda^2- \lambda e^{-\lambda})-(U(\lambda - \lambda e^{-\lambda}))^2
+\end{align*}
+
+#### Problem 4
+```{r}
+X <- seq(2,9,1)
+Freq <- c(179, 51, 17, 6, 8, 1, 0, 2)
+mu <- seq(0.8, 1.6, 0.1)
+(df <- data.frame(X=X, Freq_k=Freq))
+```
+Using the truncated Poisson distribution, we have the log likelihood function as:
+\begin{align*}
+\ln\mathcal{L} &= \prod_{k=2}^9(\frac{\lambda^ke^{-\lambda}}{k!}\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}})^{Freq_k}\\
+&= \sum_{k=2}^9 Freq_k \ln(\frac{\lambda^ke^{-\lambda}}{k!}\frac{1}{1-e^{-\lambda}-\lambda e^{-\lambda}})\\
+&= \sum_{k=2}^9 Freq_k (k\ln \lambda-\lambda-\ln k! - \ln(1-e^{-\lambda}-\lambda e^{-\lambda}))
+\end{align*}
+```{r}
+library(ggplot2)
+log_likelihood <- function(mu){
+  a <- X*log(mu)-mu-log(factorial(X))-log(1-exp(-mu)-mu*exp(-mu))
+  return(sum(Freq*a))
+}
+value <- c()
+for (i in mu){
+  value <- c(value, log_likelihood(i))
+}
+ggplot() + geom_line(aes(x=mu, y=value)) + labs(title = "log likelihood value v.s. mu")
+```
+
+
+#### Problem 5
+As the above plot is convex, we would use the "BFGS" algorithm from package **optim.functions** and we choose the middle point of $\mu's$ to be the initial value, which is 1.2
+```{r}
+library(optim.functions)
+opt <- optim(c(1.2), method = "BFGS", fn = function(x) {-log_likelihood(x)}, gr = NULL)
+opt$par
+```
+Hence, the result we got from "BFGS" is 1.39838.
+
+#### Problem 6
+By theorem, we have $$\sqrt{n}(\hat{\mu}^{MLE} - \mu) \to N(0, I(\mu)^{-1})$$, and the Fisher Information is 
+\begin{align*}
+I(\mu) &=-E[\frac{\partial^2 \ln(L) }{\partial \mu^2}]\\
+&= -E[-\frac{k}{\mu^2}-\frac{\mu e^{-\mu}(e^{-\mu}-1)}{(1-e^{-\mu}-\mu e^{-\mu})^2}]\\
+&= \frac{(e^{-\mu}-1)^2-\mu^2 e^{-\mu}}{\mu(1-e^{-\mu}-\mu e^{-\mu})^2}
+\end{align*}
+Hence, $$\sqrt{n}(\hat{\mu}^{MLE} - \mu) \to N(0, \frac{\mu(1-e^{-\mu}-\mu e^{-\mu})^2}{(e^{-\mu}-1)^2-\mu^2 e^{-\mu}})$$
+
+#### Problem 7
+The 0.95 asymptotic confidence interval for $\mu$ is $$[\hat\mu-\frac{Z_{0.975}}{\sqrt{nI(\hat\mu)}},\hat\mu+\frac{Z_{0.975}}{\sqrt{nI(\hat\mu)}}]$$
+That is 
+```{r}
+mu <- opt$par
+fisher <- ((exp(-mu)-1)^2-mu^2*exp(-mu))/mu/(1-exp(-mu)-mu*exp(-mu))^2
+print(c(mu - qnorm(0.975)/sqrt(sum(Freq)*fisher),mu + qnorm(0.975)/sqrt(sum(Freq)*fisher)))
+```
+So the 95% C.I is [1.197790, 1.598971]
+
+#### Problem 8
+It seems like a reasonable approach and it did give desirable estimate of $\mu$, but we do not have enough information to conclude about the estimator’s bias, consistency, or variance.
+
+#### Problem 9
+The $\hat{\mu}_{MLE}$ we get from the optim function is 1.39838, which is very close to the result ($\hat{\mu}=1.4$) obtained by Simonton’s technique, so we could say that Simonton’s technique is quite accurate.
