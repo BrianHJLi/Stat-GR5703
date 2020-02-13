@@ -1,0 +1,54 @@
+---
+title: "STAT5703 HW1 Exercise 1"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 1.
+#### Question 1.
+To compute $p^{th}$ population quantile, we need to find point $Q_D(p)$ such that $P(D\leq Q_D(p))=p$. So for the exponential distribution:
+$$\int_{0}^{Q_D(p)}\lambda e^{-\lambda D}dD=p=1-e^{-\lambda Q_D(p)}$$
+$$1-p=e^{-\lambda Q_D(p)}$$
+$$\ln(1-p)=-\lambda Q_D(p)$$
+$$Q_D(p)=-\frac{1}{\lambda}\ln{(1-p)}$$
+
+#### Question 2.
+To find a method of moments-based estimator of $Q_D(p)$, we need to finf MM of $\lambda$ first, because $Q_D(p)=-\frac{1}{\lambda}\ln{(1-p)}$.
+The first moment of D is:
+$$\mu_1=\mathbf{E}[D]=\frac{1}{\lambda}=\psi(\lambda)$$
+The first empirical moment is:
+$$\hat\mu_1=\bar{D_n}$$
+The MM estimatoe of $lambda$ is:
+$$\hat\lambda^{MM}=\psi^{-1}(\bar{D_n})=\frac{1}{\bar{D_n}}$$
+Therefore the MM-based estimator of $Q_D(p)$:
+$$\hat Q_D(p)^{MM}=-\frac{1}{\hat\lambda^{MM}}\ln{(1-p)}=-\bar{D_n} \ln(1-p)$$.
+
+#### Question 3.
+We arealdy know $D_1,...,D_n\overset{i.i.d.}{\sim}Exp(\lambda)$, hence by CLN,
+$$\sqrt{n}(\bar{D_n}-\mu)\xrightarrow[n\rightarrow \infty]{\mathcal{D}}\mathcal{N}(0,\sigma^2)$$
+$$\sqrt{n}(\bar{D_n}-\frac{1}{\lambda})\xrightarrow[n\rightarrow \infty]{\mathcal{D}}\mathcal{N}(0,\frac{1}{\lambda^2})$$
+Then by Delta Method,
+$$\sqrt{n}(\ln{(1-p)}\bar{D_n}+Q_D(p))\xrightarrow[n\rightarrow \infty]{\mathcal{D}}\mathcal{N}(0,\frac{(\ln{(1-p)})^2}{\lambda^2})$$
+From question 2, we already obtaint the method of moments estimator of $Q_D(p)$ is $\hat Q_D(p)^{MM}=-\bar{D_n} \ln(1-p)$, hence
+$$\frac{\sqrt{n}\lambda(Q_D(p)-\hat Q_D(p)^{MM})}{\ln{(1-p)}}\xrightarrow[n\rightarrow \infty]{\mathcal{D}}\mathcal{N}(0,1)$$
+For $approximate\ (1-\alpha)$-confidence interval, we can get:
+$$L(D)=\hat Q_D(p)^{MM}-\frac{z_{1-\alpha/2}\ln{(1-p)}}{\lambda\sqrt{n}}$$
+$$U(D)=\hat Q_D(p)^{MM}+\frac{z_{1-\alpha/2}\ln{(1-p)}}{\lambda\sqrt{n}}$$
+the $approximate\ (1-\alpha)$-confidence interval for $Q_D(p)$ is $[\hat Q_D(p)^{MM}-\frac{z_{1-\alpha/2}\ln{(1-p)}}{\lambda\sqrt{n}},\hat Q_D(p)^{MM}+\frac{z_{1-\alpha/2}\ln{(1-p)}}{\lambda\sqrt{n}}]$
+
+#### Question 4.
+Since $D_1,...,D_n\overset{i.i.d.}{\sim}Exp(\lambda)$, from addition rule for the exponential distribution, $\sum_{i=1}^{n}D_i\sim \Gamma(n,\lambda)$, then $$\lambda\bar{D_n}= \frac{\lambda}{n}\sum_{i=1}^{n}D_i \sim \Gamma(n,n)$$
+Because distribution of $\lambda\bar{D_n}$ is independent of the parameter $\lambda$, $\lambda\bar{D_n}$ is an exact pivot.
+
+To construct an exact confidence interval of median, we can get the confidence interval of $\lambda$ first. We know that 
+$$2n\lambda\bar{D_n} \sim \Gamma(n,\frac{1}{2})  \sim \chi^2_{2n}$$
+Therefore, $P(\chi^2_{1-\alpha/2,2n}<2n\lambda\bar{D_n}<\chi^2_{\alpha/2,2n})=1-\alpha$ for any $\alpha\in(0,1)$
+$$P(\frac{\chi^2_{1-\alpha/2,2n}}{2n\bar{D_n}}<\lambda<\frac{\chi^2_{\alpha/2,2n}}{2n\bar{D_n}})=1-\alpha$$
+Because $Q_D(0.5)=-\frac{1}{\lambda}\ln{(0.5)}$,
+$$P(\frac{-2n\bar{D_n}\ln(0.5)}{\chi^2_{1-\alpha/2,2n}}<Q_D(0.5)<\frac{-2n\bar{D_n}\ln(0.5)}{\chi^2_{\alpha/2,2n}})=1-\alpha$$
+Hence, the $(1-\alpha)$ exact confidence interval of the median $Q_D(0.5)$is,
+$$[\frac{-2n\bar{D_n}\ln(0.5)}{\chi^2_{1-\alpha/2,2n}},\frac{-2n\bar{D_n}\ln(0.5)}{\chi^2_{\alpha/2,2n}}]$$
