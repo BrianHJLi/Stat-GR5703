@@ -1,0 +1,97 @@
+---
+title: "HW2 Exercise 1"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+date: "3/3/2020"
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+# knitr::opts_chunk$set(fig.width=6, fig.height=4) 
+```
+
+
+```{r, warning=FALSE}
+library(readr)
+library(ggfortify)
+library(survival)
+library(ggplot2)
+```
+
+```{r}
+transplant <- read_table2("~/Documents/Columbia/STAT W5703/HW/HW2/transplant.txt", 
+    col_names = c("time", "type", "Indicator"), skip = 8)
+```
+### Problem 1
+```{r}
+# make the variable "type"" a factor
+transplant$type <- factor(transplant$type)
+censored_index <- which(transplant$Indicator==0)
+plot(density(transplant[censored_index,]$time), main = "relapse time density plot for right-censored patients")
+```
+
+As we can see from the density plot, the right-censored patients, which are alive patients, do not have a fixed censoring time; hence, it is reasonable to assume that the right censoring in this dataset is random.
+
+### Problem 2
+```{r}
+autoplot(survfit(Surv(time, Indicator)~type, data=transplant), conf.int=TRUE, col=c(1,3), main="Kaplan-Meier estimates for transplant data")
+```
+
+We can see from the above plot that there is a minor difference in the transplant survival rate between the two types. In general, Type 1 (allogeneic) transplant seems to be slightly more efficient since Type 2 (autologous) transplant has a large drop in survival after 55 months.
+
+### Problem 3
+```{r}
+model_exp <- survreg(Surv(time, Indicator)~type, data=transplant, dist = "exponential")
+summary(model_exp)
+```
+
+We can see from the output that type 2 (autologous), on average, has 0.325 lower survival than type 1 (allogeneic) transplant, and this difference is not significant as the associatd p-value is 0.25. This result agrees with my intuition from last point since the previous plot only showed type 2 (autologous) transplant has a slightly lower survival than type 1.
+
+
+### Problem 4
+From the summary table, we see that the likelihood ratio statistics gives a p-value of 0.25, indicating that the difference between type 1 and type 2 treatments is not significant. It also agrees with the insignificant coeeficient for type2. This conclusion depends on the exponential model assumption.
+
+
+### Problem 5
+```{r}
+plot(survfit(Surv(time, Indicator)~type, data=transplant), conf.int=TRUE, col=c(1,3), main="Exponential v.s. K-M fits")
+x <- seq(0, 70, 1)
+lines(x, 1-pexp(x, exp(-model_exp$coefficients[1])), col="darkred", lwd=2)
+lines(x, 1-pexp(x, exp(-sum(model_exp$coefficients))), col="darkgreen", lwd=2)
+legend("topright", legend = c("type 1", "type 2"),
+       col=c("darkred", "darkgreen"), lwd = 2)
+```
+
+We observe that the exponential model does not fit very well. For both transplant type, we see some departures from the pointwise confidence intervals of the K-M estimates. Although the expoential model fits type 2 better, the fitted line of type 2 deviates from the confidence intervals at around time = 28.
+
+### Problem 6
+```{r}
+model_wei <- survreg(Surv(time, Indicator)~type,data=transplant)
+summary(model_wei)
+```
+
+
+```{r}
+type1_index <- which(transplant$type==1)
+fit.wei1<-survreg(Surv(time, Indicator)~type, data=transplant[type1_index,])
+fit.wei2<-survreg(Surv(time, Indicator)~type, data=transplant[-type1_index,])
+gamma1=1/exp(fit.wei1$scale)
+gamma2=1/exp(fit.wei2$scale)
+
+plot(survfit(Surv(time, Indicator)~type, data=transplant), conf.int=TRUE, col=c(1,3), main="Weibull (Split data) v.s. K-M fits")
+x <- seq(0, 70, 1)
+lines(x, 1-pweibull(x, gamma1, exp(coef(fit.wei1)[1])), col="darkred",lwd=2)
+lines(x, 1-pweibull(x, gamma2, exp(coef(fit.wei2)[1])), col="darkgreen",lwd=2)
+```
+
+When we split the data according to the transplant types as what we did in the lecture notes, we can see the model fits even worse; hence, we may want to use the whole dataset.
+
+```{r}
+plot(survfit(Surv(time, Indicator)~type, data=transplant), conf.int=TRUE, col=c(1,3), main="Weibull (whole data) v.s. K-M fits")
+x <- seq(from=0,to=70,by=1)
+lines(x, 1-pexp(x, exp(-model_exp$coefficients[1])), col="darkred", lwd=2)
+lines(x, 1-pexp(x, exp(-sum(model_exp$coefficients))), col="darkgreen", lwd=2)
+lines(x, 1-pweibull(x, model_wei$scale, exp(coef(model_wei)[1])), col="purple")
+lines(x, 1-pweibull(x, model_wei$scale, exp(sum(coef(model_wei)))), col="orange")
+``` 
+
+Still, using the whole dataset does not give a better fit. This result agrees with what we have from the weibull fit model as we can see the p-value of the model is 0.37, indicating that the weibull does not fit the model well and there is no improvement from the exponential model.

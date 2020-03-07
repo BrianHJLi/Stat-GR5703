@@ -1,0 +1,133 @@
+---
+title: "Ex3_bx2168_hl3339_wf2255"
+author: "Banruo Xie;Wen Fan;Hanjun Li"
+date: "3/7/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message = F}
+library(dplyr)
+library(lubridate)
+```
+
+## (1)
+
+
+$a_1$ means the probability of rainy day given the previous day is rainy day
+
+$a_2$ means the probability of no rain day given the previous day is rainy day
+
+$a_3$ means the probability of rainy day given the previous day is no rain day
+
+$a_4$ means the probability of no rain day given the previous day is no rain day
+
+## (2)
+Let $X_i$ represent whether the ith day is rainy.
+
+By Bayesian formula:
+
+$P(X_n=0)=$
+$P(X_n=0|X_{n-1}=0)P(X_{n-1}=0)+P(X_n=0|X_{n-1}=1)P(X_{n-1}=1)$
+$= a_1P(X_n=0)+a_3(1-P(X_n=0))$
+
+Therefore, $P(X_n=0)=\frac{a_3}{1-a_1+a_3}$
+
+```{r}
+data <- read.csv('./CentralPark.csv', header = T)
+data$DATE <- as.POSIXct(strptime(as.character(data$DATE), "%m/%d/%y"))
+data <- data %>% mutate(is_rain = if_else(PRCP>=1.5,T,F))
+data$month <- month(data$DATE)
+data$will_rain <- append(data$is_rain,c(NA))[2:(length(data$is_rain)+1)]
+print(c((nrow(data %>% filter(month == 7, is_rain, will_rain)))/
+          nrow(data %>% filter(month == 7, is_rain)),
+        (nrow(data %>% filter(month == 7, is_rain, !will_rain)))/
+          nrow(data %>% filter(month == 7, is_rain)),
+        (nrow(data %>% filter(month == 7, !is_rain, will_rain)))/
+          nrow(data %>% filter(month == 7, !is_rain)),
+        (nrow(data %>% filter(month == 7, !is_rain, !will_rain)))/
+          nrow(data %>% filter(month == 7, !is_rain))))
+```
+
+## (4)
+
+Hypothesis test: $H_0: p_{00} = p_{11}$, $H_1:p_{00} \neq p_{11}$
+
+$p_{00}$ is the probability of rainy day given the previous day is rainy day
+
+$p_{11}$ is the probability of no rain day given the previous day is no rain day
+
+Since $p_{00}$ and $p_{11}$ are independent, therefore, 
+$\hat p_{00}\xrightarrow[\infty]{D}N(\hat p_{00},\frac{\hat p_{00}\left(1-\hat p_{00}\right)}{n_0})$
+
+$\hat p_{11}\xrightarrow[\infty]{D}N(\hat p_{11},\frac{\hat p_{11}\left(1-\hat p_{11}\right)}{n_1})$
+
+$\hat p_{00}-\hat p_{11}\xrightarrow[\infty]{D}N(0,\frac{\hat p_{00}\left(1-\hat p_{00}\right)}{n_0}-\frac{\hat p_{11}\left(1-\hat p_{11}\right)}{n_1})$
+
+```{r}
+a1 = (nrow(data %>% filter(month == 7, is_rain, will_rain)))/
+  nrow(data %>% filter(month == 7, is_rain))
+a4 = (nrow(data %>% filter(month == 7, !is_rain, !will_rain)))/
+  nrow(data %>% filter(month == 7, !is_rain))
+print(pnorm((a1-a4)/sqrt(a1*(1-a1)/nrow(data %>% filter(month == 7, is_rain))
+                         +a4*(1-a4)/nrow(data %>% filter(month == 7, !is_rain)))))
+```
+Therefore, we reject $H_0$
+
+## (5)
+
+```{r}
+data$will_rain2 <- append(data$will_rain,c(NA))[2:(length(data$will_rain)+1)]
+```
+
+$H_0$: Higher model chain can not improve.
+$H_1$: Higher model chain does improve.
+
+Using likelihood ratio test:
+
+$\begin{aligned}\Lambda_{n} &=2\left\{\ell(\hat{\mathbf{P}})_{\text {second order}}-\ell(\hat{\mathbf{P}})_{\text {first order}}\right\}=2\left\{\sum_{r=1}^{S} \sum_{s=1}^{S} \sum_{t=1}^{S} n_{r s t} \log \hat{p}_{r s t}-\sum_{s=1}^{S} \sum_{t=1}^{S}n_{. st} \log \hat{p}_{st}\right\} \\&=2\left\{\sum_{r=1}^{S} \sum_{s=1}^{S} \sum_{t=1}^{S} n_{r s t} \log \hat{p}_{r s t}-\sum_{r=1}^{S} \sum_{s=1}^{S} \sum_{t=1}^{S} n_{r s t} \log \hat{p}_{st}\right\}=2 \sum_{r=1}^{S} \sum_{s=1}^{S} \sum_{t=1}^{S} n_{r s t} \log \left(\frac{\hat{p}_{r s t}}{\hat{p}_{s t}}\right)\end{aligned}$
+
+By asymptotic theory, 
+$\Lambda_{n} \frac{\mathcal{D}}{n \rightarrow \infty} \chi_{(S-1)^{2}}^{2}$ 
+```{r}
+p00 <- (nrow(data %>% filter(month == 7, is_rain, will_rain)))/
+  nrow(data %>% filter(month == 7, is_rain))
+p01 <- (nrow(data %>% filter(month == 7, is_rain, !will_rain)))/
+  nrow(data %>% filter(month == 7, is_rain))
+p10 <- (nrow(data %>% filter(month == 7, !is_rain, will_rain)))/
+  nrow(data %>% filter(month == 7, !is_rain))
+p11 <- (nrow(data %>% filter(month == 7, !is_rain, !will_rain)))/
+  nrow(data %>% filter(month == 7, !is_rain))
+
+r000 <- nrow(data %>% filter(month == 7, is_rain, will_rain, will_rain2))
+r001 <- nrow(data %>% filter(month == 7, is_rain, will_rain, !will_rain2))
+r010 <- nrow(data %>% filter(month == 7, is_rain, !will_rain, will_rain2))
+r011 <- nrow(data %>% filter(month == 7, is_rain, !will_rain, !will_rain2))
+r100 <- nrow(data %>% filter(month == 7, !is_rain, will_rain, will_rain2))
+r101 <- nrow(data %>% filter(month == 7, !is_rain, will_rain, !will_rain2))
+r110 <- nrow(data %>% filter(month == 7, !is_rain, !will_rain, will_rain2))
+r111 <- nrow(data %>% filter(month == 7, !is_rain, !will_rain, !will_rain2))
+
+p000 <- r000/(r000 + r001)
+p001 <- r001/(r000 + r001)
+p010 <- r010/(r010 + r011)
+p011 <- r011/(r010 + r011)
+p100 <- r100/(r100 + r101)
+p101 <- r101/(r100 + r101)
+p110 <- r110/(r110 + r111)
+p111 <- r111/(r110 + r111)
+
+result <- 2* (r000*log(p000/p00) + r001*log(p001/p01) + r010*log(p010/p10)
+              + r011*log(p011/p11) + r100*log(p100/p00) 
+              + r101*log(p101/p01) + r110*log(p110/p10) 
+              + r111*log(p111/p11)) 
+
+
+pchisq(result,2)
+```
+ Therefore, we fail to reject $H_0$, higher model chain does not improve fit of the data.

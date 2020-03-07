@@ -1,0 +1,102 @@
+---
+title: "STAT5703 HW2 Exercise 4"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/', warning=FALSE, message=FALSE)
+```
+
+## Exercise 4.
+#### Question 1.
+The independent random variables N is in multinomial distribution, the joint distribution is
+$$
+P_{\theta}(N_{A}, N_{C}, N_{G}, N_{T})=\frac{n!}{N_{A} ! N_{C} ! N_{G} ! N_{T} !} p_{A}^{N_{A}} \cdot p_{C}^{N_{C}} \cdot p_{G}^{N_{G}} \cdot P_{T}^{N_T}
+$$
+
+#### Question 2.
+log likelihood:
+$$
+L_{\theta}=\log P_{\theta} = \log(n!) - \sum_{x \in\{A, C, G, T\}}{N_x!}+\sum_{x \in\{A, C, G, T\}} N_{x} \log p_{x}
+$$
+
+$$
+\begin{aligned}
+\frac{d L_{\theta}}{d \theta} &=\sum_{x} N_{x}  \frac{d \log(p_{x})}{d \theta} \\
+&=N_{A}  \frac{-1}{1-\theta} + N_{C}  \frac{1-2 \theta}{\theta-\theta^{2}}+ N_{G}  \frac{2 \theta-3 \theta^{2}}{\theta^{2}-\theta^{3}} + N_{T}  \frac{ 3 \theta^{2}}{\theta^{3}} =0
+\end{aligned}
+$$
+
+$$
+-N_{A}+N_{C}  \frac{1-2 \theta}{\theta}+ N_{G}  \frac{2 -3 \theta}{\theta} + N_{T}  \frac{ 3 (1-\theta)}{\theta} =0\\$$
+$$
+-N_{A} \theta +N_{c}(1-2\theta) +N_G(2-3 \theta)+3 N_{T}(1-\theta)=0\\$$
+$$
+\theta\left(N_{A}+2 N_{C} + 3N_G+ 3 N_{T}\right)=N_{C}+2 N_{G}+3 N_{T}\\
+$$
+$$
+\hat\theta = \frac{N_{C}+2 N_{G}+3 N_{T}}{N_{A}+2 N_{C} + N_G+ 3 N_{T}}\\
+$$
+
+#### Question 3.
+
+In this case we have$\hat\theta \to N(\theta, \frac{1}{nI(\theta)})$, where $I(\theta)$ is the Fisher Information.
+
+
+$$
+\begin{aligned}
+I(\theta) &= -E[\frac{d^{2} L_{\theta}}{d \theta^{2}}]\\
+ &= -E[\frac{2\theta a-a-b\theta}{\theta^2(1-\theta)^2}]\\
+&=n \cdot \frac{1+\theta + \theta^2}{\theta (1-\theta)}
+\end{aligned}
+$$
+where $a = N_{C}+2 N_{G}+3 N_{T}$, $b=N_{A}+2 N_{C} + N_G+ 3 N_{T}$
+$E[a]=n(\theta+\theta^2+\theta^3)$, $E[b]=n(1+\theta+\theta^2)$
+Therefore, the asymptotic distribution is $N(\theta, \frac{\theta (1-\theta)}{n(1+\theta + \theta^2)})$
+
+#### Question 4.
+We want $E[T]=\theta = n(a_A(1-\theta)+a_C(\theta-\theta^2)+a_G(\theta^2-\theta^3)+a_T(\theta^3))$
+Therefore$a_A = 0$, $a_C = 1/n$, $a_G = 1/n$, $a_T = 1/n$
+
+#### Question 5.
+
+$$
+Var[T] = Var[\frac{N_C + N_T + N_G}{n}] = Var[1 - \frac{N_A}{n}]=\frac{Var[N_A]}{n^2}=\frac{\theta(1-\theta)}{n}
+$$
+$$
+efficiency(T, \hat{\theta})=\frac{Var[T]}{Var[\hat\theta]}=1+\theta+\theta^2
+$$
+
+#### Question 6.
+
+log-likelihood if $p_i$ doesn't depend on $\theta$, and using Lagrange:
+
+$$
+Lagrange_{p_x;\lambda}=\sum_{x \in\{A, C, G, T\}} N_{x} \log p_{x}-\lambda(\sum_{x \in\{A, C, G, T\}}p_x-1) \\
+$$
+
+$$
+\frac{Lagrange_{p_x;\lambda}}{\partial p_{x}}=\frac{N_{x}}{p_{x}}-\lambda=0
+$$
+By solving it, we get, 
+
+$$
+p_{x}=N_x/\lambda\\
+\sum_{x \in\{A, C, G, T\}}p_{x}=\sum_{x \in\{A, C, G, T\}}\frac{N_x}{\lambda}=1\\
+$$
+Therefore $$\lambda=n\\$$
+$$
+\hat p_x=\frac{N_x}{n}, \forall x \in \{A,C,G, T\}
+$$
+Compare with $p_x$ depends on $\theta$ :
+$$\hat p_A = 1-\hat \theta, \hat p_C = \hat\theta-\hat \theta^2, \hat p_G = \hat\theta^2-\hat \theta^3, \hat p_T = \hat \theta^3$$
+Both are unbiased estimator, but $p_A$ depends on $\theta$ needs observed occurrences for all bases, $p_A$ not depends on $\theta$ noly need one of them but has 2 more free parameters.
+
+#### Question 7.
+
+The likelihood ratio test for testing the hypothesis:$P=P(\theta)$,
+
+$$
+\Lambda = 2 \sum_{x \in\{A, C, G, T\}} N_x\log \frac{\hat p_x}{\hat p_x(\theta)}=2 \sum_{x \in\{A, C, G, T\}} N_x\log \frac{N_x}{n \hat p_x(\theta)} \sim \chi_{2}
+$$
