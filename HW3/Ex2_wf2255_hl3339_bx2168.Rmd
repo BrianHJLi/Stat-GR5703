@@ -1,0 +1,93 @@
+---
+title: "STAT5703 HW3 Ex2"
+author: "Wen Fan(wf2255), Hanjun Li(hl3339), Banruo Xie(bx2168)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 2
+
+#### Question 1
+
+```{r}
+library(mgcv)
+cars$speed_sqr <- (cars$speed)^2
+lr = lm(dist ~ speed + speed_sqr , data=cars)
+summary(lr)
+AIC(lr)
+```
+
+In this model, we can see from the summary table above that the model is significant and all features are significant as well. However, the R-squared value is not very high. Thus, we drop the relatively unsignificant variable 'speed' using 'stepwise' method. After dropping, we can see the AIC value of the model decreases, while both of the variables in the model become significant. 
+
+```{r}
+lr2 = step(lm(dist ~ speed_sqr+speed , data=cars))
+summary(lr2)
+AIC(lr2)
+```
+According to above results, we would choose speed-squared only model as the best model.
+#### Question 2
+
+As we drop the variable 'speed' in point 1, we could only get value of 'reaction time' in the residual of the formulation.
+$$time=\frac{dist-\hat{\beta_0}-\hat{\beta_1}*speed}{speed}$$
+By getting its value, we can estimate its distribution.
+#### Question 3
+```{r}
+lr_1 <- function(y, X)
+  { 
+  qrx <- qr(X)
+  Q <- qr.Q(qrx,complete=TRUE) 
+  QR <- qr.R(qrx)
+  return(backsolve(QR, (t(Q) %*% y))) 
+  }
+```
+#### Question 4
+
+```{r}
+newM2 <- model.matrix(dist ~speed + I(speed^2),cars)
+lr_1(cars$dist,newM2)
+```
+Therefore, the function gives the right result for the coffecient for the model.
+#### Question 5
+```{r}
+lr_2 <- function (X, y) {
+  qrx <- qr(X) ## returns a QR decomposition object 
+  Q <- qr.Q(qrx,complete=TRUE) ## extract Q
+  R <- qr.R(qrx) ## extract R
+  f <- t(Q)%*%y
+  f <- f[1:ncol(X),]
+  beta <- solve(R)%*%f
+  residual <- y-X%*%beta
+  sigma <- as.vector(t(residual)%*%residual/(nrow(X)-ncol(X)))
+  variance <- solve(R)%*%t(solve(R))*sigma
+  list(coefficient=beta,std_error=sqrt(as.matrix(diag(variance),ncol=ncol(X))),
+       residual_variance=sigma)
+}
+newM2 <- model.matrix(dist ~speed + I(speed^2),cars)
+lr_2(newM2,cars$dist)
+```
+Therefore, the function gives the right result for the model.
+#### Question 6
+```{r}
+lr_3 <- function (X, y) {
+  qrx <- qr(X) ## returns a QR decomposition object 
+  Q <- qr.Q(qrx,complete=TRUE) ## extract Q
+  R <- qr.R(qrx) ## extract R
+  f <- t(Q)%*%y
+  f <- f[1:ncol(X),]
+  beta <- solve(R)%*%f
+  residual <- y-X%*%beta
+  sigma <- as.vector(t(residual)%*%residual/(nrow(X)-ncol(X)))
+  variance <- solve(R)%*%t(solve(R))*sigma
+  vrr <- solve(t(X)%*%X)
+  dia <- as.matrix(diag(vrr))
+  pvalue <- 2*pt(-abs(beta)/sqrt((sigma*dia)),df=nrow(X)-ncol(X))
+  list(coefficient=beta,std_error=sqrt(as.matrix(diag(variance),ncol=ncol(X))),
+       pvalue=pvalue,residual_variance=sigma)
+}
+newM2 <- model.matrix(dist ~speed + I(speed^2),cars)
+lr_3(newM2,cars$dist)
+```
+Therefore, the function gives the right result for the model.

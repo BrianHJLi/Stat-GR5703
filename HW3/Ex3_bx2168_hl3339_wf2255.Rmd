@@ -1,0 +1,64 @@
+---
+title: "HW3 Exercise 3"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+date: "4/13/2020"
+output: pdf_document
+---
+
+```{r, warning=FALSE}
+library(readr)
+library(MASS)
+CpsWages <- read_table2("~/Documents/Columbia/STAT W5703/HW/HW3/CpsWages.txt")
+names <- c('sex', 'race', 'marr', 'occupation', 'sector', 'south', 'union')
+CpsWages[, names] <- as.data.frame(sapply(CpsWages[, names], as.factor)) # make some of the variables as vector type
+```
+
+
+### Problem 1
+We could use a multiple linear regression to examine this dataset. That is, use wage as our target variables and all else to be the predictors. It is not a good idea to include age, education, and experience at the same time because those variables are highly correlated. i.e. as a person ages, one tend to have higher education and more experience; thus, it might lead to issues of collinearity.
+
+### Problem 2
+```{r, warning=FALSE}
+m1 <- lm(wage ~ ., data = CpsWages)
+summary(m1)
+
+par(mfrow=c(2,2))
+plot(m1)
+```
+
+From the plot of residual v.s. fitted value, it seems that there's a cone-shaped pattern as the fitted values get larger, so it doesn't agree with the hypothesis of homoscedasticity. From the normal QQ-plot, although there are some points depart from the QQ-line, we see that most of the points are aligned with the normal QQ-line, so we can say that the hypothesis of normality is generally met.
+
+### Problem 3
+Using $\alpha=0.05$, it appears that only sex, union, and occupation are statistically significant according to the associated p-values from the model. To test if sector is significant, we can again use the associated p-value calculated by t-test from the model. Using $\alpha=0.05$, we fail to reject the null hypothesis as the p-value for sector level 1 and 2 are both greater than 0.05.
+
+
+### Problem 4
+Since we see that only sex, union, and occupation are statistically significant from the model, we can fit a simpler model using only those three variables as predictors. We can also implement methods like AIC or BIC to reduce our model as some varaibles that do not appear to be significant might be significant in the reduced model.
+
+### Problem 5
+```{r}
+m2 <- lm(wage ~ sex+union+occupation, data = CpsWages)
+summary(m2)
+
+par(mfrow=c(2,2))
+plot(m2, which=c(1,2))
+boxcox(m2)
+```
+
+From the box-cox plot, we can see that $\lambda = 0$ lies inside the confidence interval, so we could apply log-transformation to transform the target variable wage into log(wage), and the resulting model is
+```{r}
+m3 <- lm(log(wage) ~ sex+union+occupation, data = CpsWages)
+summary(m3)
+
+par(mfrow=c(1,2))
+plot(m3, which=c(1,2))
+```
+
+We can see that the cone-shaped pattern does not appear in the residual vs fitted plot, meaning homoscedasticity is met; also, there are only 2 points not aligned with the QQ-line, meaning the normality condition is met. In addition, all variables are statistically significant from the model summary; hence, this simplified model is appropriate.
+
+### Problem 6
+As we can see from the QQ-plot in problem 5, point 171 and 200 appear to be outliers. Removing those two points could somehow improve our model, but it would not alter our conclusion. As shown below, sex, union, and occupation are still significant.
+```{r}
+summary(lm(log(wage) ~ sex+union+occupation, data = CpsWages[-c(171,200),]))
+```
+

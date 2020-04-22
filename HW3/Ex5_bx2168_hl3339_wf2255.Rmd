@@ -1,0 +1,130 @@
+---
+title: "HW3 Exercise 5"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+date: "4/15/2020"
+output: pdf_document
+---
+
+```{r, warning=FALSE}
+library(SMPracticals)
+library(MASS)
+data(pollution)
+```
+
+### Problem 1
+```{r}
+pairs(pollution)
+```
+
+Since the plots are too dense, we can not distinguish any patterns from it.
+
+```{r}
+pairs(pollution[,c(1:3,15:16)]) # association of mortality with weather
+```
+
+We do not see any patterns among weathers and mortality in these plots as the points are scattered across the plots; we could not recognize if there is outlier either.
+
+```{r}
+pairs(pollution[,c(4:11,16)])   # and social factors
+```
+
+We don't see any significant covariates from the plots and we could not recognize if there is outlier.
+```{r}
+pairs(pollution[,c(12:14,16)])  # and pollution measures
+```
+
+We still could not see any significant covariates from the plots, but we see that there might be possbile outliers in **hc** and **noc** since one or two points are apart from the rest of the points, which appear to form a cluster. We should consider transforming the dataset as most of the features don't seem to correlate with mortality. The issue of outliers and collinearity among the variables might arise in accounting for the effect of air pollution on mortality.
+
+### Problem 2
+```{r}
+fit <- step(glm(mort~.-hc-nox-so,data=pollution))
+```
+
+The model associated with the lowest AIC contains variables prec, jant, jult, popn, educ, dens, and nonw, so we want to run a reduced model using those 7 variables
+```{r}
+summary(lm(mort ~ prec + jant + jult + popn + educ + dens + nonw, data = pollution))
+```
+
+The reduced model has an adjusted R-squared of 0.68, meaning 68% of the variance could be explained by those 7 variables. Keeping all else constant:  
+
+* an increase in average annual precipitation would increase the mortality and this change is statistically significant. It might sound plausible as high precipitation could cause flood.  
+
+* a decrease in average January temperature would increase the mortality and this change is statistically significant. It sounds plausible as the elderly are especially susceptible to cold weather.  
+
+* a decrease in average July temperature would increase the mortality and this change is statistically significant. It sounds plausible due to the same reason as the previous one.    
+
+* household size is not a significant variable, which is reasonable as household size has nothing to do with mortality.  
+
+* a decrease in median school years completed by those over 22 would increase the mortality and this change is statistically significant. It sounds plausible since the level of education might affect one's knowledge in nutrition and healthy diet.  
+
+* Population per square mile in urbanized areas in 1960 is not a significant variable.  
+
+* an increase in percentage non-white population in urbanized areas in 1960 would increase the mortality and this change is statistically significant, which is not reasonable. 
+
+```{r}
+boxcox(fit)
+```
+
+The box-cox plot suggests that a log transformation might be appropriate as $\lambda=0$ falls inside the 95% confidence interval.
+
+```{r}
+plot.glm.diag(fit) # model adequate?
+```
+
+As we can see, homoscedasticity and normality condition are generally met as we don't see obvious pattern in the residual v.s. fitted value plot, nor do we see many points apart from the normal QQ-line. By checking the Cook's distance, we can see there are indeed some outliers.
+```{r}
+fit2 <- update(fit,log(mort)~.) # try log transform of response plot.glm.diag(fit) # model adequate?
+summary(fit2)
+```
+We can see the conclusion is the same as the reduced model with no log-transformation applied.
+```{r}
+plot.glm.diag(fit) # model adequate?
+```
+
+Again, homoscedasticity and normality conditions are satisfied, so the log transform version of the reduced model is adequate as well.
+
+Hence, using the reduced model resulted from step function and apply log transformation as suggested by the box-cox plot would be the chosen model.
+
+
+### Problem 3
+```{r}
+pairs(resid(lm(cbind(log(mort),hc,nox,so)~.,data=pollution)))
+```
+
+We see that **hc** and **nox** are not appropriate to be fitted using a linear model as there is obvious pattern in the residual plots, only **so** seems to have a significant linear relationship with the other variables and there seem to be outliers in all three pollution variables.
+```{r}
+fit3 <- lm(log(mort) ~ prec + jant + jult + popn + educ + dens + nonw + hc + nox + so, data = pollution)
+summary(fit3)
+```
+After adding the three pollution variables to the reduced model, the adjusted r-squared has improved by around 3%. From the previous conclusion, we want to log-transform **hc** and **nox** to eliminate the patterns in the residual plot.
+```{r}
+fit4 <- lm(log(mort) ~ prec + jant + jult + popn + educ + dens + nonw + log(hc) + log(nox) + so, data = pollution)
+summary(fit4)
+```
+We can see the adjusted r-squared is further improved. Hence, the reduced model with added variables **so**, **log(hc)**, and **log(nox)** is a better model.
+
+### Problem 4
+```{r}
+rfit <- lm.ridge(log(mort) ~ prec + jant + jult + popn + educ + dens + nonw + log(hc) + log(nox) + so, data=pollution,lambda=seq(0,20,0.01)) 
+plot(rfit)
+```
+
+As we can see, as the penalty term $\lambda$ increases, the coefficient of the varialbes tend to approache 0, and two of the variables are especially sensitive to the value of $\lambda$ as their curvature are large.
+```{r}
+select(rfit)
+```
+Those three values are estimates of the penalty term using different methods.
+
+
+### Problem 5
+```{r}
+lqs_fit <- lqs(log(mort) ~ prec + jant + jult + popn + educ + dens + nonw + log(hc) + log(nox) + so, data=pollution)
+lqs_fit
+```
+Using least trim square regression, we see that popn appear to be statistically more import than prec, which doesn't agree with what we have previously.
+
+```{r}
+rlm_fit <-rlm(log(mort) ~ prec + jant + jult + popn + educ + dens + nonw + log(hc) + log(nox) + so, data=pollution)
+summary(rlm_fit)
+```
+From the t-values, we can see that using the robust M-estimation generally results in the same conclusion as what we have previously.

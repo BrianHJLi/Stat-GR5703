@@ -1,0 +1,87 @@
+---
+title: "STAT5703 HW3 Exercise 1"
+author: "Wen Fan(wf2255), Banruo Xie(bx2168), Hanjun Li(hl3339)"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 1.
+#### Question 1.
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(magrittr)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(forecast)
+```
+```{r}
+df_milk <- read.table(file ="milk.txt",skip = 15,col.names=c("Month", "production"))
+df_milk$Month<-ymd(df_milk$Month,truncated = 1)
+df_milk <- df_milk %>% 
+  mutate(num_month=row_number())
+df_milk %>% ggplot(aes(x=Month, y=production)) + 
+  geom_line() + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+linearMod <- lm(production ~ num_month, data=df_milk)
+summary(linearMod)
+```
+From linear model, the production is 611 pounds per cow for the first month and increase 1.69 pounds per cow for each month.
+```{r}
+checkresiduals(linearMod)
+```
+The residuals are normally distributed, we can say it is a stationary time series
+
+#### Question 2.
+```{r}
+ggAcf(df_milk$production)
+```
+
+From ACF plot above. the autocorrelation crosses the dashed blue line, it means that specific lag is significantly correlated with current series. The slow decrease in the ACF as the lags increase and due to the seasonality.
+```{r}
+ggPacf(df_milk$production)
+```
+After remove linear trends in a timeseries, we can say the plot indicates a seasonal AR(1) component because the Pacf Cuts off after lag 1.
+
+#### Question 3.
+```{r}
+fitAR1 <- Arima(df_milk$production, order=c(1,0,0))
+fitAR1
+checkresiduals(fitAR1)
+```
+
+```{r}
+fitAR2 <- Arima(df_milk$production, order=c(2,0,0))
+fitAR2
+checkresiduals(fitAR2)
+```
+```{r}
+fitMA1 <- Arima(df_milk$production, order=c(0,0,1))
+fitMA1
+checkresiduals(fitMA1)
+```
+```{r}
+fitMA2 <- Arima(df_milk$production, order=c(0,0,2))
+fitMA2
+checkresiduals(fitMA2)
+```
+ In all cases, residals are normally distributed white noise, AR(1) is better with lower AICc.
+
+#### Question 4.
+```{r}
+mol1 <- auto.arima(df_milk$production)
+mol1
+checkresiduals(mol1)
+```
+The moel with auto chosen gives us a lower AICc, which is better than AR(1) we get before. This model includes AR(1) and MA(4) with a first order difference.
+```{r}
+mol2 <- Arima(df_milk$production, order=c(1,1,4), seasonal = list(order = c(1, 1, 1), period = 12))
+mol2
+checkresiduals(mol2)
+```
+After manually changing the order, we get a better model ARIMA(1,1,4)(1,1,1)[12] has a much lower AICc.
